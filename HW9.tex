@@ -130,6 +130,34 @@ which \texttt{R} cannot differentiate from 0.
 \end{kframe}
 \end{knitrout}
     \item Compute the MLEs for these data using the Log-Normal distribution.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+    \hlkwd{library}\hldef{(tidyverse)}
+
+\hlcom{#Data and Data Cleaning}
+\hldef{data} \hlkwb{<-} \hlkwd{read_csv}\hldef{(}\hlsng{"agacis.csv"}\hldef{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\itshape\color{messagecolor}{\#\# Rows: 115 Columns: 14\\\#\# -- Column specification --------------------------------------------------------\\\#\# Delimiter: "{},"{}\\\#\# chr (13): Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec, Annual\\\#\# dbl \ (1): Year\\\#\# \\\#\# i Use `spec()` to retrieve the full column specification for this data.\\\#\# i Specify the column types or set `show\_col\_types = FALSE` to quiet this message.}}\begin{alltt}
+\hldef{data.long} \hlkwb{<-} \hldef{data |>}
+  \hldef{dplyr}\hlopt{::}\hlkwd{select}\hldef{(}\hlopt{-}\hldef{Annual) |>}                   \hlcom{# Remove annual column }
+  \hlkwd{pivot_longer}\hldef{(}\hlkwc{cols} \hldef{=} \hlkwd{c}\hldef{(Jan, Feb, Mar, Apr,}   \hlcom{# pivot the column data into one col}
+                        \hldef{May, Jun, Jul, Aug,}
+                        \hldef{Sep, Oct, Nov, Dec),}
+               \hlkwc{values_to} \hldef{=} \hlsng{"Precipitation"}\hldef{,}   \hlcom{# store the values in Precipitation}
+               \hlkwc{names_to} \hldef{=} \hlsng{"Month"}\hldef{) |>}         \hlcom{# store the months in Month}
+  \hlkwd{mutate}\hldef{(}\hlkwc{Precipitation} \hldef{=} \hlkwd{case_when}\hldef{(Precipitation} \hlopt{==} \hlsng{"M"} \hlopt{~} \hlnum{NA_character_}\hldef{,}
+                                   \hlnum{TRUE}                 \hlopt{~} \hldef{Precipitation))|>}
+  \hlkwd{mutate}\hldef{(}\hlkwc{Precipitation} \hldef{=} \hlkwd{as.numeric}\hldef{(Precipitation))}
+    \hlcom{#MLE for lognormal}
+\hldef{n}\hlkwb{=}\hlnum{1380} \hlcom{#1380 observations}
+\hldef{lognorm.mu.hat.mle}   \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{log}\hldef{(data.long}\hlopt{$}\hldef{Precipitation),} \hlkwc{na.rm} \hldef{= T)}
+\hldef{lognorm.sigma.hat.mle} \hlkwb{<-}\hlkwd{sqrt}\hldef{(}\hlkwd{sum}\hldef{((}\hlkwd{log}\hldef{(data.long}\hlopt{$}\hldef{Precipitation)} \hlopt{-} \hldef{lognorm.mu.hat.mle)}\hlopt{^}\hlnum{2}\hldef{,} \hlkwc{na.rm} \hldef{= T)} \hlopt{/} \hldef{n)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
     \item Compute the likelihood ratio to compare the Weibull and the Gamma distribution. 
     Which has a better fit according to the likelhiood ratio?
     \[Q = \frac{L(\{\hat{a}, \hat{\sigma}\}|\mathbf{x})}{L(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x})}=e^{\left[\mathcal{L}(\{\hat{a}, \hat{\sigma}\}|\mathbf{x}) - \mathcal{L}(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x})\right]}\]

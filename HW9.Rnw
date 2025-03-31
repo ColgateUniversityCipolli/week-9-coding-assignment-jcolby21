@@ -74,6 +74,26 @@ alpha=mle_gamma$par[1]
 beta=mle_gamma$par[2]
 @
     \item Compute the MLEs for these data using the Log-Normal distribution.
+<<echo=TRUE>>=
+    library(tidyverse)
+
+#Data and Data Cleaning
+data <- read_csv("agacis.csv")
+data.long <- data |>    
+  dplyr::select(-Annual) |>                   # Remove annual column 
+  pivot_longer(cols = c(Jan, Feb, Mar, Apr,   # pivot the column data into one col
+                        May, Jun, Jul, Aug, 
+                        Sep, Oct, Nov, Dec), 
+               values_to = "Precipitation",   # store the values in Precipitation
+               names_to = "Month") |>         # store the months in Month
+  mutate(Precipitation = case_when(Precipitation == "M" ~ NA_character_,
+                                   TRUE                 ~ Precipitation))|>
+  mutate(Precipitation = as.numeric(Precipitation))
+    #MLE for lognormal
+n=1380 #1380 observations
+lognorm.mu.hat.mle   <- mean(log(data.long$Precipitation), na.rm = T)
+lognorm.sigma.hat.mle <-sqrt(sum((log(data.long$Precipitation) - lognorm.mu.hat.mle)^2, na.rm = T) / n)
+@
     \item Compute the likelihood ratio to compare the Weibull and the Gamma distribution. 
     Which has a better fit according to the likelhiood ratio?
     \[Q = \frac{L(\{\hat{a}, \hat{\sigma}\}|\mathbf{x})}{L(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x})}=e^{\left[\mathcal{L}(\{\hat{a}, \hat{\sigma}\}|\mathbf{x}) - \mathcal{L}(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x})\right]}\]
