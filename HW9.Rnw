@@ -40,7 +40,39 @@ which \texttt{R} cannot differentiate from 0.
   another right-skewed distribution like the Gamma (see Lecture 15), or
   the Log-Normal (see Lecture 17).
   \begin{enumerate}
-    \item Compute the MLEs for these data using a Gamma distribution. 
+    \item Compute the MLEs for these data using a Gamma distribution.
+<<echo=TRUE>>=
+    library(tidyverse)
+
+#Data and Data Cleaning
+data <- read_csv("agacis.csv")
+data.long <- data |>    
+  dplyr::select(-Annual) |>                   # Remove annual column 
+  pivot_longer(cols = c(Jan, Feb, Mar, Apr,   # pivot the column data into one col
+                        May, Jun, Jul, Aug, 
+                        Sep, Oct, Nov, Dec), 
+               values_to = "Precipitation",   # store the values in Precipitation
+               names_to = "Month") |>         # store the months in Month
+  mutate(Precipitation = case_when(Precipitation == "M" ~ NA_character_,
+                                   TRUE                 ~ Precipitation))|>
+  mutate(Precipitation = as.numeric(Precipitation))
+
+#MLE for Gamma
+llgamma <- function(data, par, neg=F){
+  alpha <- exp(par[1])
+  beta <- exp(par[2])
+  
+  loglik <- sum(log(dgamma(x=data, shape=alpha, rate=beta)), na.rm=T)
+  
+  return(ifelse(neg, -loglik, loglik))
+}
+mle_gamma <- optim(par = c(1,1),
+              fn = llgamma,
+              data=data.long$Precipitation,
+              neg=T)
+alpha=mle_gamma$par[1]
+beta=mle_gamma$par[2]
+@
     \item Compute the MLEs for these data using the Log-Normal distribution.
     \item Compute the likelihood ratio to compare the Weibull and the Gamma distribution. 
     Which has a better fit according to the likelhiood ratio?
