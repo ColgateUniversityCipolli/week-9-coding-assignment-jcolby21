@@ -41,7 +41,7 @@ which \texttt{R} cannot differentiate from 0.
   the Log-Normal (see Lecture 17).
   \begin{enumerate}
     \item Compute the MLEs for these data using a Gamma distribution.
-<<echo=TRUE>>=
+<<echo=TRUE, show_col_types=FALSE>>=
     library(tidyverse)
 
 #Data and Data Cleaning
@@ -74,7 +74,7 @@ alpha=mle_gamma$par[1]
 beta=mle_gamma$par[2]
 @
     \item Compute the MLEs for these data using the Log-Normal distribution.
-<<echo=TRUE>>=
+<<echo=TRUE, show_col_types=FALSE>>=
     library(tidyverse)
 
 #Data and Data Cleaning
@@ -97,12 +97,112 @@ lognorm.sigma.hat.mle <-sqrt(sum((log(data.long$Precipitation) - lognorm.mu.hat.
     \item Compute the likelihood ratio to compare the Weibull and the Gamma distribution. 
     Which has a better fit according to the likelhiood ratio?
     \[Q = \frac{L(\{\hat{a}, \hat{\sigma}\}|\mathbf{x})}{L(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x})}=e^{\left[\mathcal{L}(\{\hat{a}, \hat{\sigma}\}|\mathbf{x}) - \mathcal{L}(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x})\right]}\]
+
+<<show_col_types=FALSE >>=
+#Data and Data Cleaning
+data <- read_csv("agacis.csv")
+data.long <- data |>    
+  dplyr::select(-Annual) |>                   # Remove annual column 
+  pivot_longer(cols = c(Jan, Feb, Mar, Apr,   # pivot the column data into one col
+                        May, Jun, Jul, Aug, 
+                        Sep, Oct, Nov, Dec), 
+               values_to = "Precipitation",   # store the values in Precipitation
+               names_to = "Month") |>         # store the months in Month
+  mutate(Precipitation = case_when(Precipitation == "M" ~ NA_character_,
+                                   TRUE                 ~ Precipitation))|>
+  mutate(Precipitation = as.numeric(Precipitation))
+
+#MLE for Gamma
+llgamma <- function(data, par, neg=F){
+  alpha <- exp(par[1])
+  beta <- exp(par[2])
+  
+  loglik <- sum(log(dgamma(x=data, shape=alpha, rate=beta)), na.rm=T)
+  
+  return(ifelse(neg, -loglik, loglik))
+}
+mle_gamma <- optim(par = c(1,1),
+              fn = llgamma,
+              data=data.long$Precipitation,
+              neg=T)
+# Log-Likelihood for Weibull
+loglik_weibull <- -2166.496
+
+# Log-Likelihood for Gamma 
+loglik_gamma <- -mle_gamma$value  # Negative of the value from optim()
+
+# Likelihood Ratio for Weibull vs Gamma
+likelihood_ratio_gamma <- exp(loglik_weibull - loglik_gamma)
+likelihood_ratio_gamma
+@
+
+Since the likelihood ratio is $2.16133 \times 10^{-7}$, it suggests that the Gamma Distribution fits the data better than the Weibull Distribution. 
+
     \item Compute the likelihood ratio to compare the Weibull and the Log-Normal distribution.
     Which has a better fit according to the likelihood ratio?
     \[Q = \frac{L(\{\hat{a}, \hat{\sigma}\}|\mathbf{x})}{L(\{\hat{\mu}, \hat{\sigma}\}|\mathbf{x})}=e^{\left[\mathcal{L}(\{\hat{a}, \hat{\sigma}\}|\mathbf{x}) - \mathcal{L}(\{\hat{\mu}, \hat{\sigma}\}|\mathbf{x})\right]}\]
+    
+<<show_col_types=FALSE >>=
+
+#Data and Data Cleaning
+data <- read_csv("agacis.csv")
+data.long <- data |>    
+  dplyr::select(-Annual) |>                   # Remove annual column 
+  pivot_longer(cols = c(Jan, Feb, Mar, Apr,   # pivot the column data into one col
+                        May, Jun, Jul, Aug, 
+                        Sep, Oct, Nov, Dec), 
+               values_to = "Precipitation",   # store the values in Precipitation
+               names_to = "Month") |>         # store the months in Month
+  mutate(Precipitation = case_when(Precipitation == "M" ~ NA_character_,
+                                   TRUE                 ~ Precipitation))|>
+  mutate(Precipitation = as.numeric(Precipitation))
+
+# Log-Likelihood for Weibull
+loglik_weibull <- -2166.496
+
+# Log-Likelihood for Lognormal
+loglik_lognormal <- sum(-log(data.long$Precipitation) - 0.5 * log(2 * pi * lognorm.sigma.hat.mle^2) - (log(data.long$Precipitation) - lognorm.mu.hat.mle)^2 / (2 * lognorm.sigma.hat.mle^2), na.rm = TRUE)
+
+
+# Likelihood Ratio for Weibull vs Lognormal
+likelihood_ratio_lognormal <- exp(loglik_weibull - loglik_lognormal)
+likelihood_ratio_lognormal
+@  
+
+Since the likelihood ratio is very large, $8.112098 \times 10^{20}$, it suggests that the Weibull distribution fits the data a lot better than the Lognormal distribution. 
+
     \item Compute the likelihood ratio to compare the Gamma and the Log-Normal distribution.
     Which has a better fit according to the likelhiood ratio?
     \[Q = \frac{L(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x})}{L(\{\hat{\mu}, \hat{\sigma}\}|\mathbf{x})}=e^{\left[\mathcal{L}(\{\hat{\alpha}, \hat{\beta}\}|\mathbf{x}) - \mathcal{L}(\{\hat{\mu}, \hat{\sigma}\}|\mathbf{x})\right]}\]
+
+<<show_col_types=FALSE >>=
+#Data and Data Cleaning
+data <- read_csv("agacis.csv")
+data.long <- data |>    
+  dplyr::select(-Annual) |>                   # Remove annual column 
+  pivot_longer(cols = c(Jan, Feb, Mar, Apr,   # pivot the column data into one col
+                        May, Jun, Jul, Aug, 
+                        Sep, Oct, Nov, Dec), 
+               values_to = "Precipitation",   # store the values in Precipitation
+               names_to = "Month") |>         # store the months in Month
+  mutate(Precipitation = case_when(Precipitation == "M" ~ NA_character_,
+                                   TRUE                 ~ Precipitation))|>
+  mutate(Precipitation = as.numeric(Precipitation))
+
+# Log-Likelihood for Gamma 
+loglik_gamma <- -mle_gamma$value  # Negative of the value from optim()
+
+# Log-Likelihood for Lognormal
+loglik_lognormal <- sum(-log(data.long$Precipitation) - 0.5 * log(2 * pi * lognorm.sigma.hat.mle^2) - (log(data.long$Precipitation) - lognorm.mu.hat.mle)^2 / (2 * lognorm.sigma.hat.mle^2), na.rm = TRUE)
+
+# Likelihood Ratio for Gamma vs Lognormal
+likelihood_ratio_gamma_lognormal <- exp(loglik_gamma - loglik_lognormal)
+likelihood_ratio_gamma_lognormal
+@
+    
+Since the likelihood ratio is very large, $3.75329 \times 10^{27}$, the Gamma distribution fits the data better for this model.
+    
+   
   \end{enumerate}
   \item Optional Coding Challenge. Choose the ``best" distribution and refit the
   model by season.
